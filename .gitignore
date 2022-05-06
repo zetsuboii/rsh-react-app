@@ -21,3 +21,7 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+/**/_*
+/src/reach/artifacts/
+/src/reach/contracts/.reach

@@ -18,7 +18,7 @@ const NftDetails = Object({
   platformAddress: Address
 });
 
-const Random = Struct([["x",UInt], ["y",Bytes(8)]]);
+const Random = Struct([["x", UInt], ["y", Bytes(8)]]);
 
 const OwnerInterface = {
   getNftDetails: Fun([Random, UInt], NftDetails)
@@ -55,7 +55,7 @@ export const main = Reach.App(() => {
 
   Owner.only(() => {
     const { tokenId, initialPrice } = declassify(interact.getNftDetails(
-      Random.fromTuple([12, Bytes(8).pad("ayo") ]), 5));
+      Random.fromTuple([12, Bytes(8).pad("ayo")]), 5));
   });
   Owner.publish(tokenId, initialPrice);
   commit();
@@ -63,7 +63,7 @@ export const main = Reach.App(() => {
   Owner.pay([[1, tokenId]]);
 
   const offers = new Map(Address, UInt);
-  
+
   const initialState = {
     owner: Owner,
     price: initialPrice,
@@ -71,62 +71,62 @@ export const main = Reach.App(() => {
     totalOfferAmt: 0
   }
 
-  const { owner, price, status, totalOfferAmt } = 
+  const { owner, price, status, totalOfferAmt } =
     parallelReduce(initialState)
-    .invariant(
-      balance() == totalOfferAmt && 
-      balance(tokenId) == (status == FOR_SALE ? 1 : 0)
-    )
-    .define(() => {
-      User_View.price.set(price);
-      User_View.owner.set(owner);
-      User_View.getOfferOf.set((address) => offers[address]);
-    })
-    .while(status == FOR_SALE || totalOfferAmt != 0)
-    .api(
-      User_API.changePrice, // Function signature
-      ((_) => {
-        check(status == FOR_SALE, "Asset not for sale");
-        check(this == owner, "Not owner of asset");
-      }), // Assumptions
-      ((_) => 0), // Payment
-      ((newPrice, ok) => {
-        check(status == FOR_SALE);
-        check(this == owner);
-        ok(null);
-
-        return { owner, price: newPrice, status, totalOfferAmt };
-      })  // Consensus
-    )
-    .api(
-      User_API.makeOffer,
-      ((_) => {
-        check(status == FOR_SALE, "Asset not for sale");
-        check(isNone(offers[this]), "Already have an offer");
-        check(this != owner, "Owner of asset");
-      }),
-      ((offerPrice) => offerPrice),
-      ((offerPrice, ok) => {
-        check(status == FOR_SALE, "Asset not for sale");
-        check(isNone(offers[this]), "Already have an offer");
-        check(this != owner, "Owner of asset");
-        ok(null);
-
-        offers[this] = offerPrice;
-        // Emit Event
-        return { owner, price, status, totalOfferAmt: totalOfferAmt+offerPrice };
+      .invariant(
+        balance() == totalOfferAmt &&
+        balance(tokenId) == (status == FOR_SALE ? 1 : 0)
+      )
+      .define(() => {
+        User_View.price.set(price);
+        User_View.owner.set(owner);
+        User_View.getOfferOf.set((address) => offers[address]);
       })
-    )
-    .api(
-      User_API.testAPI,
-      (() => {}),
-      (() => 0),
-      ((ok) => {
-        ok(5);
-        return { owner, price, status, totalOfferAmt }
-      })
-    )
-    .timeout(false);
+      .while(status == FOR_SALE || totalOfferAmt != 0)
+      .api(
+        User_API.changePrice, // Function signature
+        ((_) => {
+          check(status == FOR_SALE, "Asset not for sale");
+          check(this == owner, "Not owner of asset");
+        }), // Assumptions
+        ((_) => 0), // Payment
+        ((newPrice, ok) => {
+          check(status == FOR_SALE);
+          check(this == owner);
+          ok(null);
+
+          return { owner, price: newPrice, status, totalOfferAmt };
+        })  // Consensus
+      )
+      .api(
+        User_API.makeOffer,
+        ((_) => {
+          check(status == FOR_SALE, "Asset not for sale");
+          check(isNone(offers[this]), "Already have an offer");
+          check(this != owner, "Owner of asset");
+        }),
+        ((offerPrice) => offerPrice),
+        ((offerPrice, ok) => {
+          check(status == FOR_SALE, "Asset not for sale");
+          check(isNone(offers[this]), "Already have an offer");
+          check(this != owner, "Owner of asset");
+          ok(null);
+
+          offers[this] = offerPrice;
+          // Emit Event
+          return { owner, price, status, totalOfferAmt: totalOfferAmt + offerPrice };
+        })
+      )
+      .api(
+        User_API.testAPI,
+        (() => { }),
+        (() => 0),
+        ((ok) => {
+          ok(5);
+          return { owner, price, status, totalOfferAmt }
+        })
+      )
+      .timeout(false);
 
   commit();
   // write your program here

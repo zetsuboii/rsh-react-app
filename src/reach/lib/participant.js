@@ -2,13 +2,25 @@ import AppState from "./appState";
 
 // Encapsulates functionality of a single account. This way it becomes possible
 // to interact with the contract without passing a contract around
-// It is assumed that a single User instance interacts with a single contract
+// It is assumed that a single Paricipant instance interacts with a single contract
 // In order to interact with multiple contracts at the same time, it would be 
-// sensible to have multiple User's from the same account, although it isn't 
+// sensible to have multiple Participant's from the same account, although it isn't 
 // tested 
-class User {
+class Participant {
+    /**
+     * @description Reach standard library
+     * @type {import("@reach-sh/stdlib/dist/types/interfaces").Stdlib_User}
+     */
     stdlib = null;
+    /**
+     * @description Account that connected wallet
+     * @type {import("@reach-sh/stdlib/ALGO").Account}
+     */
     account = null;
+    /**
+     * @desription Contract user is going to run
+     * @type {import("@reach-sh/stdlib/ALGO").Contract}
+     */
     contract = null;
 
     constructor(stdlib, account) {
@@ -29,11 +41,11 @@ class User {
      * @returns 
      */
     run(role, initState, setAppState, iface) {
-        if(this.contract == undefined)
+        if (this.contract == undefined)
             throw new Error("Backend is undefined, panic");
-        
+
         console.log(`Running as ${role}`)
-        // [1] Keeping a copy of the state inside one function allows us to carry 
+        // [1] Keeping a copy of the state inside run function allows us to carry 
         // state between different participant calls, it might be a better idea
         // to ditch this and have a brand new state on each call. In that case
         // state would be held outside of the run function
@@ -42,8 +54,8 @@ class User {
         const wrappedInterface = Object.keys(iface).reduce((prev, name) => {
             // If the value is a variable, add it to the object
             if (!iface[name] instanceof Function)
-                return Object.assign(prev, {[name]: iface[name]});
-            
+                return Object.assign(prev, { [name]: iface[name] });
+
             // Otherwise create a wrapped function that updates the app state 
             // and then executes the function logic
             /** @param {...any} ctcArgs */
@@ -59,20 +71,20 @@ class User {
                 appState = newState
                 return await iface[name](newState);
             }
-    
+
             return Object.assign(prev, { [name]: wrapped });
         }, {})
-    
+
         // Run the participant and try to catch any error
         return (async () => {
             try {
                 return await this.contract.participants[role](wrappedInterface);
             }
-            catch(e) {
-                if(e.message != undefined) {
+            catch (e) {
+                // Try to parse the error message
+                if (e.message != undefined) {
                     const errObj = JSON.parse(RegExp(/.*({[\w\W]*)/gm).exec(e.message)[1])
                     console.log(errObj)
-                    // It is possible to handle errors based on errObj
                 } else {
                     console.log(e)
                 }
@@ -81,14 +93,14 @@ class User {
     }
 
     // Return APIs of the contract for a role
-    apis(role) { 
-        return this.contract.apis[role]; 
+    apis(role) {
+        return this.contract.apis[role];
     }
 
     // Return View functions of the contract for a role
-    views(role) { 
-        return this.contract.apis[role]; 
+    views(role) {
+        return this.contract.apis[role];
     }
 }
 
-export default User;
+export default Participant;

@@ -34,7 +34,7 @@ class AppState {
      *  vars: { [key: string]: any }
      * }} 
      */
-    constructor({ name, resolve, reject, ctcArgs, vars }) { 
+    constructor({ name, resolve, reject, ctcArgs, vars }) {
         this.name = name;
         this.resolve = resolve;
         this.reject = reject;

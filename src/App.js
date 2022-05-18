@@ -1,4 +1,4 @@
-import * as FixedSale from "./reach/artifacts/fixedSale.main.mjs";
+import * as FixedSale from "./reach/contracts/build/fixedSale.main.mjs";
 
 import useContract from "./hooks/useContract"
 import useReach from "./hooks/useReach"
